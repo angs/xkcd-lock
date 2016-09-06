@@ -8,7 +8,7 @@ function getIcon {
   if [[ $COMIC -ge 404 ]]; then COMIC=$(($COMIC + 1)); fi #comic #404 doesn't exists
   URL=$(curl -sL "http://xkcd.com/$COMIC/info.0.json" | grep -oP '(?<=img": ")([^"]*)' | tr -d '\\')
   echo $URL > /tmp/urli
-  curl -L "$URL" -o $ICON
+  curl -sL "$URL" -o $ICON
 }
 
 function getScreenshot {
