@@ -1,0 +1,47 @@
+#!/bin/bash
+ICON=/tmp/xkcd.png
+TMPBG=/tmp/screen.png
+
+function getIcon {
+  NUMCOMICS=$(curl -sL "http://xkcd.com/info.0.json" | grep -oP '(?<=num": )([^,]*)')
+  COMIC=$((1 + RANDOM % ($NUMCOMICS - 1)))
+  if [[ $COMIC -ge 404 ]]; then COMIC=$(($COMIC + 1)); fi #comic #404 doesn't exists
+  URL=$(curl -sL "http://xkcd.com/$COMIC/info.0.json" | grep -oP '(?<=img": ")([^"]*)' | tr -d '\\')
+  echo $URL > /tmp/urli
+  curl -L "$URL" -o $ICON
+}
+
+function getScreenshot {
+  scrot $TMPBG
+  mogrify -scale 5% -blur 0x2 -filter lanczos -resize 2000% $TMPBG
+}
+
+getIcon &
+getScreenshot &
+wait
+
+PX=0
+PY=0
+#lockscreen image info
+R=$(file $ICON | grep -o '[0-9]* x [0-9]*')
+RA=(${R// x / })
+SR=$(xrandr --query | grep ' connected' | grep -o '[0-9][0-9]*x[0-9][0-9]*[^ ]*')
+if [[ -f $ICON ]]
+then
+  for RES in $SR
+    do
+      # monitor position/offset
+      SRA=(${RES//[x+]/ })
+      PX=$((${SRA[2]} + ${SRA[0]} / 2 - ${RA[0]} / 2))
+      PY=$((${SRA[3]} + ${SRA[1]} / 2 - ${RA[1]} / 2))
+      composite -compose src-over -geometry +$PX+$PY $ICON $TMPBG $TMPBG #seems to be fastest
+  #    mogrify -draw "image SrcOver ${PX},${PY} 0,0 '${ICON}'" $TMPBG
+  #    convert $TMPBG $ICON -geometry +$PX+$PY -composite -matte $TMPBG
+  done
+fi
+
+i3lock -u -i $TMPBG #-I 5 -d
+
+rm $TMPBG
+rm $ICON
+
