@@ -7,4 +7,5 @@ Requirements:
 * bash
 * curl
 * imagemagick
+* i3lock
 * scrot (optional)
