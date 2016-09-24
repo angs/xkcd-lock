@@ -49,12 +49,16 @@ function embedComic {
 
 function cleanup {
 	rm $TMPBG
-	rm $ICON
+	#rm $ICON
 }
 
-download_xkcd &
+if [[ ! -e $ICON ]]; then
+	download_xkcd &
+fi
 getScreenshot &
 wait
 embedComic
-i3lock -u -i $TMPBG -I 5 -d
+i3lock -u -i $TMPBG -I 5 -d &
+download_xkcd &
+wait
 cleanup
