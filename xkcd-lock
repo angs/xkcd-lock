@@ -6,13 +6,26 @@ PIXELATE="-scale 5% -scale 2000%"
 BLUR="-scale 5% -blur 0x2 -filter lanczos -resize 2000%"
 FILTER=$BLUR
 
+function main {
+	if [[ ! -e $ICON ]]; then
+		download_xkcd &
+	fi
+	getScreenshot &
+	wait
+	embedComic
+	i3lock -u -i $TMPBG -I 5 -d &
+	download_xkcd &
+	wait
+	cleanup
+}
+
 function download_xkcd {
-	NUMCOMICS=$(curl -sL "http://xkcd.com/info.0.json" | grep -oP '(?<=num": )([^,]*)')
-	COMIC=404
+	local NUMCOMICS=$(curl -sL "http://xkcd.com/info.0.json" | grep -oP '(?<=num": )([^,]*)')
+	local COMIC=404
 	until [[ "$COMIC" -ne "404" ]]; do
 		COMIC=$((1 + RANDOM % $NUMCOMICS))
 	done
-	URL=$(curl -sL "http://xkcd.com/$COMIC/info.0.json" | grep -oP '(?<=img": ")([^"]*)' | tr -d '\\')
+	local URL=$(curl -sL "http://xkcd.com/$COMIC/info.0.json" | grep -oP '(?<=img": ")([^"]*)' | tr -d '\\')
 	curl -sL "$URL" -o $ICON
 }
 
@@ -27,15 +40,15 @@ function getScreenshot {
 
 function embedComic {
 	#lockscreen image info
-	C_C=($(identify -format "%w %h" $ICON))
-	SCREENS=$(xrandr --query | grep ' connected' | grep -o '[0-9][0-9]*x[0-9][0-9]*[^ ]*')
+	local C_C=($(identify -format "%w %h" $ICON))
+	local SCREENS=$(xrandr --query | grep ' connected' | grep -o '[0-9][0-9]*x[0-9][0-9]*[^ ]*')
 	if [[ -f "$ICON" ]]; then
-		COMM=""
+		local COMM=""
 		for RES in $SCREENS; do
 			# monitor position/offset
-			C_S=(${RES//[x+]/ })
-			PX=$((${C_S[2]} + ${C_S[0]} / 2 - ${C_C[0]} / 2))
-			PY=$((${C_S[3]} + ${C_S[1]} / 2 - ${C_C[1]} / 2))
+			local C_S=(${RES//[x+]/ })
+			local PX=$((${C_S[2]} + ${C_S[0]} / 2 - ${C_C[0]} / 2))
+			local PY=$((${C_S[3]} + ${C_S[1]} / 2 - ${C_C[1]} / 2))
 			if [[ "$COMM" == "" ]]; then
 				COMM="convert $TMPBG \( $ICON -repage +$PX+$PY \) "
 			else
@@ -52,13 +65,5 @@ function cleanup {
 	#rm $ICON
 }
 
-if [[ ! -e $ICON ]]; then
-	download_xkcd &
-fi
-getScreenshot &
-wait
-embedComic
-i3lock -u -i $TMPBG -I 5 -d &
-download_xkcd &
-wait
-cleanup
+main "$@"
+
