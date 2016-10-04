@@ -2,7 +2,7 @@
 ICON=/tmp/xkcd #might be png or jpg, identify from imagemagick will know
 TMPBG=/tmp/screen.png
 
-PIXELATE="-scale 5% -scale 2000%"
+PIXELATE="-scale 5% -sample 2000%"
 BLUR="-scale 5% -blur 0x2 -filter lanczos -resize 2000%"
 FILTER=$BLUR
 
